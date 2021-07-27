@@ -32,7 +32,7 @@
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 #include "fastertransformer/trt_fused_multihead_attention/qkvToContext.h"
-
+#include<iostream>
 namespace fastertransformer{
 namespace cuda{
 
@@ -797,7 +797,7 @@ class OpenMultiHeadAttention: IMultiHeadAttention<OpType_>
     {
       is_fuse_QKV_ = false;
     }
-
+	std::cout << "is_fuse_QKV:" << is_fuse_QKV_ << std::endl;
     if(is_fuse_QKV_ == true && int8_mode_ == 0)
     {
       // For tensorrt, we cannot get the pointer of from tensor until enqueue
@@ -867,6 +867,7 @@ class OpenMultiHeadAttention: IMultiHeadAttention<OpType_>
         else if (int8_mode_ == 2 || int8_mode_ == 3)
         {
           if (fusedINT8QKV == 0){
+			  std::cout <<"fusedINT8QKV1:"<<fusedINT8QKV<<std::endl;
             cublasLtMM_withAlgo_int8IO((int8_t*)Q_int_buf_, 1, m, n, k, 0, 0, 0, 
                                        param_.int8O_gemm_deQ_scale_list[0],  
                                        param_.int8_from_tensor, Q_weight, 
@@ -884,6 +885,7 @@ class OpenMultiHeadAttention: IMultiHeadAttention<OpType_>
                                        cublasAlgoMap_, use_ORDER_COL32_2R_4R4_);
           }
           else{
+			std::cout <<"fusedINT8QKV2:"<<fusedINT8QKV<<std::endl;
             int strideFactor = (fusedINT8QKV == 1) ? (sizeof(DataType_)/sizeof(int8_t)) : 1; 
             cublasLtMM_withAlgo_int8IO((int8_t*)Q_int_buf_, 3, m, n, k, 0, n*k*strideFactor, n*m, 
                                        param_.int8O_gemm_deQ_scale_list[0],
@@ -910,7 +912,7 @@ class OpenMultiHeadAttention: IMultiHeadAttention<OpType_>
         }
         else
         {
-
+		std::cout << "MHA NOFUSE" << std::endl;
           DataType_ scalar = 1 / (sqrtf(size_per_head_ * 1.0f) * q_scaling_);
           multiHeadAttr_nofuse_kernelLauncher(
                 param_.stream,
@@ -994,10 +996,12 @@ class OpenMultiHeadAttention: IMultiHeadAttention<OpType_>
           // 1. FP16
           // 2. GPU SM >= 72
           //  3. Temporally add seqlen <= 384 limitation because the current fused mha cannot handle seqlen > 384.
-          fused_multiHeadAttr_kernelLauncher(S);
+          	//std::cout << "Using MHA" << std::endl;
+			fused_multiHeadAttr_kernelLauncher(S);
         }
         else
         {
+		std::cout << "MHA NOFUSE" << std::endl;
           DataType_ scalar = 1 / (sqrtf(size_per_head_ * 1.0f) * q_scaling_);
 
           multiHeadAttr_nofuse_kernelLauncher(

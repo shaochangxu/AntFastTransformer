@@ -18,7 +18,7 @@ find_package(CUDA 10.1 REQUIRED)
 
 option(BUILD_TF "Build in TensorFlow mode" OFF)
 option(BUILD_PYT "Build in PyTorch TorchScript class mode" OFF)
-option(BUILD_GPT "Build project with gpt" ON) # TODO Set default to OFF
+option(BUILD_GPT "Build project with gpt" OFF) # TODO Set default to OFF
 
 if(BUILD_GPT)
   message(STATUS "Add DBUILD_GPT, requires MPI and NCCL")
